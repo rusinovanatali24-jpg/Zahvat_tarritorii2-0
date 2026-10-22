@@ -156,7 +156,7 @@
   .preview-resizer:active{cursor:grabbing;}
   #modalPreviewBox{position:relative;}
 
-  /* Дополнительные стили для блока добавления изображений */
+  /* Стили для миниатюр изображений в конструкторе */
   .img-picker-box {
     display: flex;
     gap: 8px;
@@ -187,11 +187,14 @@
         <span>Редактор игры</span>
       </div>
     </div>
+    
+    <!-- ВСЕ ИСХОДНЫЕ ВКЛАДКИ -->
     <div class="tab active" onclick="switchTab('questions')"><div class="dot"></div> Вопросы</div>
     <div class="tab" onclick="switchTab('design')"><div class="dot"></div> Оформление</div>
     <div class="tab" onclick="switchTab('board')"><div class="dot"></div> Игровое поле</div>
     <div class="tab" onclick="switchTab('gems')"><div class="dot"></div> Кристаллы</div>
     <div class="tab" onclick="switchTab('audio')"><div class="dot"></div> Звуки</div>
+    <div class="tab" onclick="switchTab('settings')"><div class="dot"></div> Настройки игры</div>
     <div class="tab" onclick="switchTab('export')"><div class="dot"></div> Экспорт / Импорт</div>
 
     <div class="save-box">
@@ -202,14 +205,15 @@
   </div>
 
   <div class="main">
-    <!-- ПАНЕЛЬ: ВОПРОСЫ -->
+    
+    <!-- ПАНЕЛЬ: ВОПРОСЫ (С ОБНОВЛЕННЫМ КОНСТРУКТОРОМ И СТАРЫМ БЫСТРЫМ ВВОДОМ СО ШПОРГАЛКОЙ) -->
     <div class="panel" id="panel-questions">
       <div class="panel-head">
         <h1>Вопросы игры</h1>
-        <p>Создавайте вопросы по отдельности с картинками или используйте быстрое добавление пакетом.</p>
+        <p>Создавайте вопросы с картинками по отдельности или используйте пакетное добавление.</p>
       </div>
 
-      <!-- Конструктор одиночного вопроса -->
+      <!-- Конструктор отдельного вопроса -->
       <div class="card">
         <h3 id="qFormTitle">Добавить вопрос</h3>
         <input type="hidden" id="editQIndex" value="-1">
@@ -220,7 +224,9 @@
             <option value="single">Один правильный ответ</option>
             <option value="multiple">Несколько правильных ответов</option>
             <option value="text">Текстовый ответ</option>
-            <option value="order">Сопоставление / Упорядочивание</option>
+            <option value="order">Упорядочивание / Сопоставление</option>
+            <option value="truefalse">Верно / Неверно</option>
+            <option value="range">Числовой диапазон</option>
           </select>
         </div>
 
@@ -228,11 +234,11 @@
           <label class="f">Текст вопроса</label>
           <textarea id="qTextInput" placeholder="Введите текст вопроса..."></textarea>
           
-          <!-- Загрузка фото к вопросу -->
+          <!-- Картинка для самого вопроса -->
           <div class="img-picker-box">
             <img id="qImgPreview" class="img-preview-thumb" src="" style="display:none;">
-            <input type="text" id="qImgUrl" placeholder="Ссылка на изображение (http://...)" style="flex:1;" oninput="updateQImgPreview()">
-            <button class="small" onclick="document.getElementById('qImgFile').click()">Из файла</button>
+            <input type="text" id="qImgUrl" placeholder="Ссылка на изображение вопроса (http://...)" style="flex:1;" oninput="updateQImgPreview()">
+            <button class="small" onclick="document.getElementById('qImgFile').click()">С компьютера</button>
             <button class="small danger" onclick="clearQImg()">✕</button>
             <input type="file" id="qImgFile" accept="image/*" style="display:none" onchange="handleQImgFile(this)">
           </div>
@@ -250,16 +256,26 @@
         </div>
       </div>
 
-      <!-- Быстрое добавление вопросов -->
+      <!-- Быстрое добавление вопросов (со Шпаргалкой) -->
       <div class="card">
-        <h3>Быстрое пакетное добавление вопросов</h3>
-        <p class="muted" style="margin-bottom:8px;">Введите вопросы списком (каждый с новой строки). Используйте знаки * для обозначения правильных вариантов.</p>
-        <textarea id="bulkQuestionsText" style="width:100%;min-height:90px;" placeholder="Какой город столица Франции?
+        <h3>Быстрое добавление вопросов</h3>
+        <p class="muted" style="margin-bottom:8px;">Введите список вопросов в текстовое поле. Правильные варианты ответов отметьте звездочкой (*).</p>
+        
+        <!-- Возвращенная Шпаргалка -->
+        <div style="background:var(--bg-deep);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px;font-size:12.5px;color:var(--muted);">
+          <b style="color:var(--gold);display:block;margin-bottom:4px;">💡 Шпаргалка по быстрому вводу:</b>
+          • Первая строка — сам вопрос.<br>
+          • Каждая следующая строка — вариант ответа.<br>
+          • Поставьте символ <b>*</b> перед правильным вариантом (например: <i>*Париж</i>).<br>
+          • Пустая строка между блоками разделяет вопросы.
+        </div>
+
+        <textarea id="bulkQuestionsText" style="width:100%;min-height:90px;" placeholder="Столица Франции?
 *Париж
 Лион
 Марсель"></textarea>
         <div class="row" style="justify-content:flex-end;margin-top:10px;">
-          <button onclick="processBulkQuestions()">Импортировать пакет вопросов</button>
+          <button onclick="processBulkQuestions()">Импортировать пакет</button>
         </div>
       </div>
 
@@ -273,90 +289,103 @@
       </div>
     </div>
 
-    <!-- ПАНЕЛЬ: ОФОРМЛЕНИЕ (НЕ ИЗМЕНЯЛАСЬ) -->
+    <!-- ПАНЕЛЬ: ОФОРМЛЕНИЕ (ОРИГИНАЛ) -->
     <div class="panel" id="panel-design" style="display:none;">
       <div class="panel-head">
         <h1>Оформление темы</h1>
-        <p>Настройте шрифты, цвета и фоны игрового экрана.</p>
+        <p>Настройте визуальный стиль интерфейса и шрифты.</p>
       </div>
       <div class="card">
-        <h3>Шрифты и заголовок</h3>
+        <h3>Название и Шрифты</h3>
         <div class="col" style="margin-bottom:12px;">
-          <label class="f">Название игры</label>
-          <input type="text" id="gameTitleInput" value="Захват территории" oninput="saveDesignSettings()">
+          <label class="f">Заголовок игры</label>
+          <input type="text" id="gameTitleInput" value="Захват территории">
         </div>
         <div class="col">
-          <label class="f">Основной шрифт</label>
-          <select id="fontSelect" onchange="saveDesignSettings()">
-            <option value="'Nunito', sans-serif">Nunito (Современный)</option>
-            <option value="'Comfortaa', cursive">Comfortaa (Округлый)</option>
-            <option value="'Playfair Display', serif">Playfair Display (Классический)</option>
-            <option value="'Cormorant Garamond', serif">Cormorant Garamond (Элегантный)</option>
-            <option value="'Bad Script', cursive">Bad Script (Рукописный)</option>
-            <option value="'Rampart One', cursive">Rampart One (Акцентный)</option>
+          <label class="f">Шрифт интерфейса</label>
+          <select id="fontSelect">
+            <option value="'Nunito', sans-serif">Nunito</option>
+            <option value="'Comfortaa', cursive">Comfortaa</option>
+            <option value="'Playfair Display', serif">Playfair Display</option>
+            <option value="'Cormorant Garamond', serif">Cormorant Garamond</option>
+            <option value="'Bad Script', cursive">Bad Script</option>
+            <option value="'Rampart One', cursive">Rampart One</option>
           </select>
         </div>
       </div>
     </div>
 
-    <!-- ПАНЕЛЬ: ИГРОВОЕ ПОЛЕ (НЕ ИЗМЕНЯЛАСЬ) -->
+    <!-- ПАНЕЛЬ: ИГРОВОЕ ПОЛЕ (ОРИГИНАЛ) -->
     <div class="panel" id="panel-board" style="display:none;">
       <div class="panel-head">
         <h1>Игровое поле</h1>
-        <p>Настройка размера сетки и территории.</p>
+        <p>Настройки размеров сетки и параметров карты.</p>
       </div>
       <div class="card">
-        <h3>Размер поля</h3>
+        <h3>Размер сетки</h3>
         <div class="range-row">
-          <label class="f">Количество клеток:</label>
-          <input type="range" id="boardSizeRange" min="9" max="49" step="1" value="16" oninput="document.getElementById('boardSizeNum').innerText=this.value;saveBoardSettings();">
+          <label class="f">Клеток на поле:</label>
+          <input type="range" id="boardSizeRange" min="9" max="49" step="1" value="16" oninput="document.getElementById('boardSizeNum').innerText=this.value">
           <div class="badge-num" id="boardSizeNum">16</div>
         </div>
       </div>
     </div>
 
-    <!-- ПАНЕЛЬ: КРИСТАЛЛЫ (НЕ ИЗМЕНЯЛАСЬ) -->
+    <!-- ПАНЕЛЬ: КРИСТАЛЛЫ (ОРИГИНАЛ) -->
     <div class="panel" id="panel-gems" style="display:none;">
       <div class="panel-head">
-        <h1>Кристаллы и Награды</h1>
-        <p>Настройка внешнего вида игровой валюты.</p>
+        <h1>Кристаллы</h1>
+        <p>Настройка игровых наград и камней.</p>
       </div>
       <div class="card">
-        <h3>Список кристаллов</h3>
+        <h3>Доступные кристаллы</h3>
         <div class="gem-grid" id="gemGridContainer"></div>
       </div>
     </div>
 
-    <!-- ПАНЕЛЬ: ЗВУКИ (НЕ ИЗМЕНЯЛАСЬ) -->
+    <!-- ПАНЕЛЬ: ЗВУКИ (ОРИГИНАЛ) -->
     <div class="panel" id="panel-audio" style="display:none;">
       <div class="panel-head">
-        <h1>Звуковое сопровождение</h1>
-        <p>Настройка звуковых эффектов для игры.</p>
+        <h1>Звуки</h1>
+        <p>Управление звуковым сопровождением игры.</p>
       </div>
       <div class="card">
-        <h3>Звуковые эффекты</h3>
-        <p class="muted">Включение или отключение стандартных звуков нажатий и победы.</p>
+        <h3>Аудиоэффекты</h3>
+        <p class="muted">Настройка звуков победы, ответов и кликов.</p>
       </div>
     </div>
 
-    <!-- ПАНЕЛЬ: ЭКСПОРТ (НЕ ИЗМЕНЯЛАСЬ) -->
+    <!-- ПАНЕЛЬ: НАСТРОЙКИ ИГРЫ (ОРИГИНАЛ) -->
+    <div class="panel" id="panel-settings" style="display:none;">
+      <div class="panel-head">
+        <h1>Настройки игры</h1>
+        <p>Общие правила и параметры игрового процесса.</p>
+      </div>
+      <div class="card">
+        <h3>Игровые параметры</h3>
+        <p class="muted">Время на ответ, таймеры и правила захвата.</p>
+      </div>
+    </div>
+
+    <!-- ПАНЕЛЬ: ЭКСПОРТ / ИМПОРТ (ОРИГИНАЛ) -->
     <div class="panel" id="panel-export" style="display:none;">
       <div class="panel-head">
         <h1>Экспорт и Импорт</h1>
-        <p>Сохранение конфигурации игры в файл или код.</p>
+        <p>Выгрузка готовой игры или кода конфигурации.</p>
       </div>
       <div class="card">
-        <h3>Код конфигурации</h3>
+        <h3>JSON-код игры</h3>
         <div class="export-code" id="exportJsonCode"></div>
         <div class="row" style="margin-top:10px;">
           <button class="primary" onclick="copyConfigCode()">Копировать код</button>
         </div>
       </div>
     </div>
+
   </div>
 </div>
 
-<!-- ВСПЛЫВАЮЩИЙ БЛОК LaTeX (НЕ ИЗМЕНЯЛСЯ) -->
+<!-- ВСПЛЫВАЮЩАЯ ПАНЕЛЬ LATEX -->
 <button class="latex-toggle-btn" onclick="toggleLatexPanel()">Формулы LaTeX</button>
 <div class="latex-panel" id="latexPanel">
   <div class="latex-panel-head">
@@ -376,7 +405,6 @@
 <div class="toast" id="toastMsg">Сохранено</div>
 
 <script>
-  // Основное состояние данных
   let gameData = {
     title: "Захват территории",
     font: "'Nunito', sans-serif",
@@ -386,7 +414,6 @@
 
   let activeInputForLatex = null;
 
-  // Инициализация
   window.onload = function() {
     renderFormOptions();
     renderQuestionsList();
@@ -417,7 +444,7 @@
     setTimeout(() => t.classList.remove('show'), 2000);
   }
 
-  // --- ЛОГИКА РАЗДЕЛА ВОПРОСЫ ---
+  // --- ЛОГИКА РАЗДЕЛА ВОПРОСОВ ---
 
   function renderFormOptions() {
     const type = document.getElementById('qTypeSelect').value;
@@ -434,8 +461,16 @@
       return;
     }
 
+    if (type === 'truefalse') {
+      container.innerHTML = `
+        <div class="opt-row"><input type="radio" name="optCorrect" checked> <input type="text" class="opt-text" value="Верно" readonly style="border:none;background:transparent;"></div>
+        <div class="opt-row"><input type="radio" name="optCorrect"> <input type="text" class="opt-text" value="Неверно" readonly style="border:none;background:transparent;"></div>
+      `;
+      document.getElementById('addOptBtn').style.display = 'none';
+      return;
+    }
+
     document.getElementById('addOptBtn').style.display = 'inline-block';
-    // Создаем 2 начальных варианта
     addOptionRow();
     addOptionRow();
   }
@@ -443,7 +478,7 @@
   function addOptionRow(val = '', isCorrect = false, imgUrl = '') {
     const type = document.getElementById('qTypeSelect').value;
     const container = document.getElementById('optionsContainer');
-    if(type === 'text') return;
+    if(type === 'text' || type === 'truefalse') return;
 
     const row = document.createElement('div');
     row.className = 'opt-row';
@@ -453,8 +488,8 @@
       inputControl = `<input type="radio" name="optCorrect" ${isCorrect ? 'checked' : ''}>`;
     } else if (type === 'multiple') {
       inputControl = `<input type="checkbox" class="opt-correct" ${isCorrect ? 'checked' : ''}>`;
-    } else if (type === 'order') {
-      inputControl = `<span class="muted" style="font-size:11px;">Порядок</span>`;
+    } else if (type === 'order' || type === 'range') {
+      inputControl = `<span class="muted" style="font-size:11px;">Шаг</span>`;
     }
 
     row.innerHTML = `
@@ -534,13 +569,13 @@
       const optImg = row.querySelector('.opt-img-url') ? row.querySelector('.opt-img-url').value : '';
       let isCorrect = false;
 
-      if(type === 'single') {
+      if(type === 'single' || type === 'truefalse') {
         const radio = row.querySelector('input[type="radio"]');
         if(radio && radio.checked) isCorrect = true;
       } else if(type === 'multiple') {
         const chk = row.querySelector('.opt-correct');
         if(chk && chk.checked) isCorrect = true;
-      } else if(type === 'text' || type === 'order') {
+      } else {
         isCorrect = true;
       }
 
@@ -598,10 +633,14 @@
     const container = document.getElementById('optionsContainer');
     container.innerHTML = '';
 
-    if(q.type === 'text') {
+    if(q.type === 'text' || q.type === 'truefalse') {
       renderFormOptions();
-      if(q.options[0]) {
+      if(q.type === 'text' && q.options[0]) {
         container.querySelector('.opt-text').value = q.options[0].text;
+      } else if(q.type === 'truefalse') {
+        const radios = container.querySelectorAll('input[type="radio"]');
+        if(q.options[0] && q.options[0].isCorrect) radios[0].checked = true;
+        if(q.options[1] && q.options[1].isCorrect) radios[1].checked = true;
       }
     } else {
       document.getElementById('addOptBtn').style.display = 'inline-block';
@@ -637,7 +676,7 @@
     let currentQ = null;
 
     lines.forEach(line => {
-      if(line.startsWith('*') || (currentQ && line.match(/^[а-яа-z0-9]/i) && currentQ.options.length > 0)) {
+      if(line.startsWith('*') || (currentQ && currentQ.options.length > 0 && !line.includes('?'))) {
         if(!currentQ) return;
         const isCorrect = line.startsWith('*');
         const optText = isCorrect ? line.substring(1).trim() : line;
@@ -687,6 +726,8 @@
       if(q.type === 'multiple') typeName = 'Несколько ответов';
       if(q.type === 'text') typeName = 'Текстовый';
       if(q.type === 'order') typeName = 'Порядок';
+      if(q.type === 'truefalse') typeName = 'Верно/Неверно';
+      if(q.type === 'range') typeName = 'Диапазон';
 
       let optsHtml = (q.options || []).map(o => `
         <div style="font-size:12px;color:${o.isCorrect ? 'var(--gold)' : 'var(--muted)'};display:flex;align-items:center;gap:6px;">
@@ -740,16 +781,6 @@
     activeInputForLatex.value = val.substring(0, start) + formatted + val.substring(end);
     showToast('Формула вставлена');
     toggleLatexPanel();
-  }
-
-  // Вспомогательные настройки
-  function saveDesignSettings() {
-    gameData.title = document.getElementById('gameTitleInput').value;
-    gameData.font = document.getElementById('fontSelect').value;
-  }
-
-  function saveBoardSettings() {
-    gameData.boardSize = parseInt(document.getElementById('boardSizeRange').value);
   }
 
   function exportData() {
